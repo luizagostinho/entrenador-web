@@ -1,16 +1,17 @@
-import { useRouter } from "expo-router";
-
 import {
-  StyleSheet,
+  View,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  StyleSheet,
 } from "react-native";
+
+import { useRouter } from "expo-router";
 
 
 export default function Index() {
   const router = useRouter();
+
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>
@@ -53,14 +54,16 @@ export default function Index() {
         <Text style={styles.googleText}>G Entrar com Google</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push("/cadastro")}>
-        <Text style={styles.register}>
-          Não tem uma conta?{" "}
-          <Text style={styles.registerBlue}>
-            Cadastre-se
-          </Text>
-        </Text>
-      </TouchableOpacity>
+      <TouchableOpacity
+  onPress={() => router.push("/cadastro")}
+>
+  <Text style={styles.register}>
+    Não tem uma conta?{" "}
+    <Text style={styles.registerBlue}>
+      Cadastre-se
+    </Text>
+  </Text>
+</TouchableOpacity>
     </View>
   );
 }

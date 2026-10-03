@@ -1,13 +1,93 @@
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
 } from "react-native";
 
+import { useState } from "react";
+import { useRouter } from "expo-router";
+
 export default function Cadastro() {
+  const router = useRouter();
+
+  const [tipoUsuario, setTipoUsuario] = useState<
+    "personal" | "aluno" | null
+  >(null);
+
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+
+  const cadastrar = () => {
+
+    if (!tipoUsuario) {
+      Alert.alert(
+        "Atenção",
+        "Selecione se você é Personal ou Aluno."
+      );
+      return;
+    }
+
+    // Verifica o nome
+    if (!nome.trim()) {
+      Alert.alert(
+        "Atenção",
+        "Digite seu nome completo."
+      );
+      return;
+    }
+
+    // Verifica o e-mail
+    if (!email.trim()) {
+      Alert.alert(
+        "Atenção",
+        "Digite seu e-mail."
+      );
+      return;
+    }
+
+    // Validação simples de e-mail
+    const emailValido =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailValido.test(email)) {
+      Alert.alert(
+        "Atenção",
+        "Digite um e-mail válido."
+      );
+      return;
+    }
+
+    // Verifica senha
+    if (senha.length < 8) {
+      Alert.alert(
+        "Atenção",
+        "A senha deve ter pelo menos 8 caracteres."
+      );
+      return;
+    }
+
+    // Confirma senha
+    if (senha !== confirmarSenha) {
+      Alert.alert(
+        "Atenção",
+        "As senhas não são iguais."
+      );
+      return;
+    }
+
+    // Tudo certo
+    Alert.alert(
+      "Cadastro válido!",
+      `Usuário: ${nome}\nTipo: ${tipoUsuario}\nE-mail: ${email}`
+    );
+  };
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
@@ -17,43 +97,91 @@ export default function Cadastro() {
         Fit<Text style={styles.logoBlue}>Track</Text>
       </Text>
 
-      <Text style={styles.title}>Crie sua conta</Text>
+      <Text style={styles.title}>
+        Crie sua conta
+      </Text>
 
-      <Text style={styles.subtitle}>Escolha seu perfil para começar</Text>
+      <Text style={styles.subtitle}>
+        Escolha seu perfil para começar
+      </Text>
 
-      {/* Tipo de usuário */}
-      <Text style={styles.label}>Eu sou:</Text>
+      <Text style={styles.label}>
+        Eu sou:
+      </Text>
 
       <View style={styles.profileContainer}>
-        <TouchableOpacity style={styles.profileCard}>
-          <Text style={styles.profileIcon}>👨‍🏫</Text>
 
-          <Text style={styles.profileTitle}>Personal Trainer</Text>
+        {/* PERSONAL */}
+
+        <TouchableOpacity
+          style={[
+            styles.profileCard,
+            tipoUsuario === "personal" &&
+              styles.profileCardSelected,
+          ]}
+          onPress={() =>
+            setTipoUsuario("personal")
+          }
+        >
+          <Text style={styles.profileIcon}>
+            👨‍🏫
+          </Text>
+
+          <Text style={styles.profileTitle}>
+            Personal Trainer
+          </Text>
 
           <Text style={styles.profileDescription}>
             Gerencie alunos e crie treinos.
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.profileCard}>
-          <Text style={styles.profileIcon}>🏋️</Text>
+        {/* ALUNO */}
 
-          <Text style={styles.profileTitle}>Aluno</Text>
+        <TouchableOpacity
+          style={[
+            styles.profileCard,
+            tipoUsuario === "aluno" &&
+              styles.profileCardSelected,
+          ]}
+          onPress={() =>
+            setTipoUsuario("aluno")
+          }
+        >
+          <Text style={styles.profileIcon}>
+            🏋️
+          </Text>
 
-          <Text style={styles.profileDescription}>Acompanhe seus treinos.</Text>
+          <Text style={styles.profileTitle}>
+            Aluno
+          </Text>
+
+          <Text style={styles.profileDescription}>
+            Acompanhe seus treinos.
+          </Text>
         </TouchableOpacity>
+
       </View>
 
-      {/* Dados */}
-      <Text style={styles.label}>Nome completo</Text>
+      {/* NOME */}
+
+      <Text style={styles.label}>
+        Nome completo
+      </Text>
 
       <TextInput
         style={styles.input}
         placeholder="Digite seu nome"
         placeholderTextColor="#999"
+        value={nome}
+        onChangeText={setNome}
       />
 
-      <Text style={styles.label}>E-mail</Text>
+      {/* EMAIL */}
+
+      <Text style={styles.label}>
+        E-mail
+      </Text>
 
       <TextInput
         style={styles.input}
@@ -61,33 +189,67 @@ export default function Cadastro() {
         placeholderTextColor="#999"
         keyboardType="email-address"
         autoCapitalize="none"
+        value={email}
+        onChangeText={setEmail}
       />
 
-      <Text style={styles.label}>Senha</Text>
+      {/* SENHA */}
+
+      <Text style={styles.label}>
+        Senha
+      </Text>
 
       <TextInput
         style={styles.input}
         placeholder="Crie uma senha"
         placeholderTextColor="#999"
         secureTextEntry
+        value={senha}
+        onChangeText={setSenha}
       />
 
-      <Text style={styles.label}>Confirmar senha</Text>
+      {/* CONFIRMAR SENHA */}
+
+      <Text style={styles.label}>
+        Confirmar senha
+      </Text>
 
       <TextInput
         style={styles.input}
         placeholder="Digite a senha novamente"
         placeholderTextColor="#999"
         secureTextEntry
+        value={confirmarSenha}
+        onChangeText={setConfirmarSenha}
       />
 
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Criar conta</Text>
+      {/* BOTÃO */}
+
+      <TouchableOpacity
+        style={[
+          styles.button,
+          !tipoUsuario && styles.buttonDisabled,
+        ]}
+        onPress={cadastrar}
+      >
+        <Text style={styles.buttonText}>
+          Criar conta
+        </Text>
       </TouchableOpacity>
 
-      <Text style={styles.loginText}>
-        Já tem uma conta? <Text style={styles.loginBlue}>Entrar</Text>
-      </Text>
+      {/* VOLTAR */}
+
+      <TouchableOpacity
+        onPress={() => router.back()}
+      >
+        <Text style={styles.loginText}>
+          Já tem uma conta?{" "}
+          <Text style={styles.loginBlue}>
+            Entrar
+          </Text>
+        </Text>
+      </TouchableOpacity>
+
     </ScrollView>
   );
 }
@@ -144,11 +306,16 @@ const styles = StyleSheet.create({
   profileCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#E5E7EB",
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
+  },
+
+  profileCardSelected: {
+    borderColor: "#1683F5",
+    backgroundColor: "#EEF6FF",
   },
 
   profileIcon: {
@@ -187,6 +354,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: 30,
+  },
+
+  buttonDisabled: {
+    backgroundColor: "#AFCDF0",
   },
 
   buttonText: {
