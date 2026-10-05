@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from "react-native";
 
 import { useState } from "react";
@@ -23,69 +22,46 @@ export default function Cadastro() {
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
 
+  const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
+
   const cadastrar = () => {
+    setErro("");
+    setSucesso("");
 
     if (!tipoUsuario) {
-      Alert.alert(
-        "Atenção",
-        "Selecione se você é Personal ou Aluno."
-      );
+      setErro("Selecione se você é Personal ou Aluno.");
       return;
     }
 
-    // Verifica o nome
     if (!nome.trim()) {
-      Alert.alert(
-        "Atenção",
-        "Digite seu nome completo."
-      );
+      setErro("Digite seu nome completo.");
       return;
     }
 
-    // Verifica o e-mail
     if (!email.trim()) {
-      Alert.alert(
-        "Atenção",
-        "Digite seu e-mail."
-      );
+      setErro("Digite seu e-mail.");
       return;
     }
 
-    // Validação simples de e-mail
-    const emailValido =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailValido.test(email)) {
-      Alert.alert(
-        "Atenção",
-        "Digite um e-mail válido."
-      );
+      setErro("Digite um e-mail válido.");
       return;
     }
 
-    // Verifica senha
     if (senha.length < 8) {
-      Alert.alert(
-        "Atenção",
-        "A senha deve ter pelo menos 8 caracteres."
-      );
+      setErro("A senha deve ter pelo menos 8 caracteres.");
       return;
     }
 
-    // Confirma senha
     if (senha !== confirmarSenha) {
-      Alert.alert(
-        "Atenção",
-        "As senhas não são iguais."
-      );
+      setErro("As senhas não são iguais.");
       return;
     }
 
-    // Tudo certo
-    Alert.alert(
-      "Cadastro válido!",
-      `Usuário: ${nome}\nTipo: ${tipoUsuario}\nE-mail: ${email}`
-    );
+    setSucesso("Cadastro válido! 🎉");
   };
 
   return (
@@ -97,35 +73,27 @@ export default function Cadastro() {
         Fit<Text style={styles.logoBlue}>Track</Text>
       </Text>
 
-      <Text style={styles.title}>
-        Crie sua conta
-      </Text>
+      <Text style={styles.title}>Crie sua conta</Text>
 
       <Text style={styles.subtitle}>
         Escolha seu perfil para começar
       </Text>
 
-      <Text style={styles.label}>
-        Eu sou:
-      </Text>
+      <Text style={styles.label}>Eu sou:</Text>
 
       <View style={styles.profileContainer}>
-
-        {/* PERSONAL */}
-
         <TouchableOpacity
           style={[
             styles.profileCard,
             tipoUsuario === "personal" &&
               styles.profileCardSelected,
           ]}
-          onPress={() =>
-            setTipoUsuario("personal")
-          }
+          onPress={() => {
+            setTipoUsuario("personal");
+            setErro("");
+          }}
         >
-          <Text style={styles.profileIcon}>
-            👨‍🏫
-          </Text>
+          <Text style={styles.profileIcon}>👨‍🏫</Text>
 
           <Text style={styles.profileTitle}>
             Personal Trainer
@@ -136,21 +104,18 @@ export default function Cadastro() {
           </Text>
         </TouchableOpacity>
 
-        {/* ALUNO */}
-
         <TouchableOpacity
           style={[
             styles.profileCard,
             tipoUsuario === "aluno" &&
               styles.profileCardSelected,
           ]}
-          onPress={() =>
-            setTipoUsuario("aluno")
-          }
+          onPress={() => {
+            setTipoUsuario("aluno");
+            setErro("");
+          }}
         >
-          <Text style={styles.profileIcon}>
-            🏋️
-          </Text>
+          <Text style={styles.profileIcon}>🏋️</Text>
 
           <Text style={styles.profileTitle}>
             Aluno
@@ -160,14 +125,9 @@ export default function Cadastro() {
             Acompanhe seus treinos.
           </Text>
         </TouchableOpacity>
-
       </View>
 
-      {/* NOME */}
-
-      <Text style={styles.label}>
-        Nome completo
-      </Text>
+      <Text style={styles.label}>Nome completo</Text>
 
       <TextInput
         style={styles.input}
@@ -177,11 +137,7 @@ export default function Cadastro() {
         onChangeText={setNome}
       />
 
-      {/* EMAIL */}
-
-      <Text style={styles.label}>
-        E-mail
-      </Text>
+      <Text style={styles.label}>E-mail</Text>
 
       <TextInput
         style={styles.input}
@@ -193,11 +149,7 @@ export default function Cadastro() {
         onChangeText={setEmail}
       />
 
-      {/* SENHA */}
-
-      <Text style={styles.label}>
-        Senha
-      </Text>
+      <Text style={styles.label}>Senha</Text>
 
       <TextInput
         style={styles.input}
@@ -208,11 +160,7 @@ export default function Cadastro() {
         onChangeText={setSenha}
       />
 
-      {/* CONFIRMAR SENHA */}
-
-      <Text style={styles.label}>
-        Confirmar senha
-      </Text>
+      <Text style={styles.label}>Confirmar senha</Text>
 
       <TextInput
         style={styles.input}
@@ -223,21 +171,26 @@ export default function Cadastro() {
         onChangeText={setConfirmarSenha}
       />
 
-      {/* BOTÃO */}
+      {erro !== "" && (
+        <Text style={styles.error}>
+          ❌ {erro}
+        </Text>
+      )}
+
+      {sucesso !== "" && (
+        <Text style={styles.success}>
+          ✅ {sucesso}
+        </Text>
+      )}
 
       <TouchableOpacity
-        style={[
-          styles.button,
-          !tipoUsuario && styles.buttonDisabled,
-        ]}
+        style={styles.button}
         onPress={cadastrar}
       >
         <Text style={styles.buttonText}>
           Criar conta
         </Text>
       </TouchableOpacity>
-
-      {/* VOLTAR */}
 
       <TouchableOpacity
         onPress={() => router.back()}
@@ -249,7 +202,6 @@ export default function Cadastro() {
           </Text>
         </Text>
       </TouchableOpacity>
-
     </ScrollView>
   );
 }
@@ -347,17 +299,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
+  error: {
+    color: "#DC2626",
+    fontSize: 14,
+    marginTop: 15,
+    textAlign: "center",
+  },
+
+  success: {
+    color: "#16A34A",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 15,
+    textAlign: "center",
+  },
+
   button: {
     height: 52,
     backgroundColor: "#1683F5",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 30,
-  },
-
-  buttonDisabled: {
-    backgroundColor: "#AFCDF0",
+    marginTop: 25,
   },
 
   buttonText: {
