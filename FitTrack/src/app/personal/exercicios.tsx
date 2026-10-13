@@ -5,126 +5,180 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  TextInput,
 } from "react-native";
 
-import {
-  useRouter,
-  useLocalSearchParams,
-} from "expo-router";
+import { useState } from "react";
+import { useRouter } from "expo-router";
 
-import {
-  useVideoPlayer,
-  VideoView,
-} from "expo-video";
+const listaExercicios = [
+  { id: 1, nome: "Supino reto", grupo: "Peito", icone: "💪" },
+  { id: 2, nome: "Crucifixo", grupo: "Peito", icone: "🏋️" },
+  { id: 3, nome: "Flexão de braço", grupo: "Peito", icone: "🔥" },
+  { id: 4, nome: "Tríceps pulley", grupo: "Tríceps", icone: "💪" },
+  { id: 5, nome: "Tríceps testa", grupo: "Tríceps", icone: "🏋️" },
+  { id: 6, nome: "Rosca direta", grupo: "Bíceps", icone: "💪" },
+  { id: 7, nome: "Rosca martelo", grupo: "Bíceps", icone: "🏋️" },
+  { id: 8, nome: "Puxada frontal", grupo: "Costas", icone: "🔥" },
+  { id: 9, nome: "Remada baixa", grupo: "Costas", icone: "🏋️" },
+  { id: 10, nome: "Agachamento", grupo: "Pernas", icone: "🦵" },
+  { id: 11, nome: "Leg press", grupo: "Pernas", icone: "🏋️" },
+  { id: 12, nome: "Cadeira extensora", grupo: "Pernas", icone: "🦵" },
+  { id: 13, nome: "Desenvolvimento", grupo: "Ombros", icone: "💪" },
+  { id: 14, nome: "Elevação lateral", grupo: "Ombros", icone: "🏋️" },
+  { id: 15, nome: "Abdominal", grupo: "Abdômen", icone: "🔥" },
+];
 
-export default function Exercicio() {
+const grupos = [
+  "Todos",
+  "Peito",
+  "Costas",
+  "Pernas",
+  "Bíceps",
+  "Tríceps",
+  "Ombros",
+  "Abdômen",
+];
+
+export default function Exercicios() {
   const router = useRouter();
 
-  const { nome } = useLocalSearchParams<{
-    nome?: string;
-  }>();
+  const [busca, setBusca] = useState("");
+  const [grupoSelecionado, setGrupoSelecionado] =
+    useState("Todos");
 
-  const nomeExercicio = nome || "Supino reto";
+  const exerciciosFiltrados = listaExercicios.filter(
+    (exercicio) => {
+      const correspondeBusca = exercicio.nome
+        .toLowerCase()
+        .includes(busca.trim().toLowerCase());
 
-  const player = useVideoPlayer(
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    (player) => {
-      player.loop = false;
+      const correspondeGrupo =
+        grupoSelecionado === "Todos" ||
+        exercicio.grupo === grupoSelecionado;
+
+      return correspondeBusca && correspondeGrupo;
     }
   );
 
+  
+
+function abrirExercicio(nome: string) {
+  router.push(
+    `/personal/criar-treino?exercicio=${encodeURIComponent(nome)}` as any
+  );
+}
+
+
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.back}>‹</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>
-          Exercício
-        </Text>
+        <Text style={styles.title}>Exercícios</Text>
 
-        <View style={{ width: 30 }} />
+        <View style={styles.headerSpace} />
       </View>
 
-      <Text style={styles.exerciseName}>
-        {nomeExercicio}
+      <Text style={styles.subtitle}>
+        Encontre o exercício ideal para seu treino.
       </Text>
 
-      <Text style={styles.muscle}>
-        Demonstração do exercício
-      </Text>
-
-      <View style={styles.videoContainer}>
-        <VideoView
-          player={player}
-          style={styles.video}
-          nativeControls
-          contentFit="contain"
-        />
-      </View>
+      <TextInput
+        style={styles.search}
+        placeholder="🔎 Buscar exercício..."
+        placeholderTextColor="#999"
+        value={busca}
+        onChangeText={setBusca}
+        autoCapitalize="none"
+      />
 
       <Text style={styles.sectionTitle}>
-        Como executar
+        Grupo muscular
       </Text>
 
-      <View style={styles.descriptionCard}>
-        <Text style={styles.description}>
-          1. Posicione seu corpo corretamente antes de
-          começar o movimento.
-        </Text>
-
-        <Text style={styles.description}>
-          2. Execute o exercício de forma controlada,
-          mantendo uma boa postura.
-        </Text>
-
-        <Text style={styles.description}>
-          3. Respeite as orientações do seu personal
-          trainer e utilize uma carga adequada.
-        </Text>
-
-        <Text style={styles.tip}>
-          💡 Dica: priorize a execução correta do
-          movimento, sem exagerar no peso.
-        </Text>
-      </View>
-
-      <Text style={styles.sectionTitle}>
-        Informações do treino
-      </Text>
-
-      <View style={styles.infoContainer}>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoNumber}>4</Text>
-          <Text style={styles.infoLabel}>
-            Séries
-          </Text>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoNumber}>10</Text>
-          <Text style={styles.infoLabel}>
-            Repetições
-          </Text>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoNumber}>60s</Text>
-          <Text style={styles.infoLabel}>
-            Descanso
-          </Text>
-        </View>
-      </View>
-
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => router.back()}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filters}
       >
-        <Text style={styles.addButtonText}>
-          + Adicionar ao treino
-        </Text>
-      </TouchableOpacity>
+        {grupos.map((grupo) => {
+          const selecionado = grupoSelecionado === grupo;
+
+          return (
+            <TouchableOpacity
+              key={grupo}
+              style={[
+                styles.filterButton,
+                selecionado && styles.filterSelected,
+              ]}
+              onPress={() => setGrupoSelecionado(grupo)}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  selecionado && styles.filterTextSelected,
+                ]}
+              >
+                {grupo}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      <Text style={styles.sectionTitle}>
+        Exercícios disponíveis ({exerciciosFiltrados.length})
+      </Text>
+
+      {exerciciosFiltrados.map((exercicio) => (
+        <TouchableOpacity
+          key={exercicio.id}
+          style={styles.card}
+          onPress={() => abrirExercicio(exercicio.nome)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.icon}>
+            <Text style={styles.iconText}>
+              {exercicio.icone}
+            </Text>
+          </View>
+
+          <View style={styles.info}>
+            <Text style={styles.name}>
+              {exercicio.nome}
+            </Text>
+
+            <Text style={styles.muscle}>
+              {exercicio.grupo}
+            </Text>
+          </View>
+
+          <Text style={styles.arrow}>›</Text>
+        </TouchableOpacity>
+      ))}
+
+      {exerciciosFiltrados.length === 0 && (
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>🔎</Text>
+
+          <Text style={styles.emptyTitle}>
+            Nenhum exercício encontrado
+          </Text>
+
+          <Text style={styles.emptyText}>
+            Tente outro nome ou grupo muscular.
+          </Text>
+        </View>
+      )}
+
+      <View style={styles.bottomSpace} />
     </ScrollView>
   );
 }
@@ -135,121 +189,126 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F9FC",
     paddingHorizontal: 20,
   },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: 60,
-    marginBottom: 25,
+    marginBottom: 15,
   },
-
+  headerSpace: {
+    width: 30,
+  },
   back: {
     fontSize: 40,
     color: "#1683F5",
   },
-
   title: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#111827",
   },
-
-  exerciseName: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  muscle: {
-    fontSize: 15,
-    color: "#1683F5",
-    fontWeight: "600",
-    marginTop: 5,
-    marginBottom: 20,
-  },
-
-  videoContainer: {
-    width: "100%",
-    height: 220,
-    backgroundColor: "#000000",
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-
-  video: {
-    width: "100%",
-    height: "100%",
-  },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111827",
-    marginTop: 30,
-    marginBottom: 12,
-  },
-
-  descriptionCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 18,
-  },
-
-  description: {
+  subtitle: {
+    color: "#6B7280",
     fontSize: 14,
-    color: "#4B5563",
-    lineHeight: 21,
+    marginBottom: 22,
+  },
+  search: {
+    height: 52,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    marginBottom: 22,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: "#111827",
     marginBottom: 12,
   },
-
-  tip: {
+  filters: {
+    marginBottom: 24,
+  },
+  filterButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    marginRight: 8,
+  },
+  filterSelected: {
+    backgroundColor: "#1683F5",
+    borderColor: "#1683F5",
+  },
+  filterText: {
+    color: "#4B5563",
     fontSize: 13,
-    color: "#1683F5",
-    backgroundColor: "#EEF6FF",
-    padding: 12,
-    borderRadius: 10,
-    lineHeight: 19,
+    fontWeight: "600",
   },
-
-  infoContainer: {
-    flexDirection: "row",
-    gap: 10,
+  filterTextSelected: {
+    color: "#FFFFFF",
   },
-
-  infoCard: {
-    flex: 1,
+  card: {
     backgroundColor: "#FFFFFF",
     borderRadius: 14,
-    paddingVertical: 18,
+    padding: 15,
+    marginBottom: 12,
+    flexDirection: "row",
     alignItems: "center",
   },
-
-  infoNumber: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#1683F5",
-  },
-
-  infoLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginTop: 5,
-  },
-
-  addButton: {
-    height: 54,
-    backgroundColor: "#1683F5",
+  icon: {
+    width: 50,
+    height: 50,
     borderRadius: 12,
+    backgroundColor: "#E8F3FF",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 30,
-    marginBottom: 50,
   },
-
-  addButtonText: {
-    color: "#FFFFFF",
+  iconText: {
+    fontSize: 24,
+  },
+  info: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  name: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#111827",
+  },
+  muscle: {
+    fontSize: 13,
+    color: "#1683F5",
+    marginTop: 4,
+  },
+  arrow: {
+    fontSize: 28,
+    color: "#9CA3AF",
+  },
+  empty: {
+    alignItems: "center",
+    paddingVertical: 35,
+  },
+  emptyIcon: {
+    fontSize: 35,
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#111827",
+  },
+  emptyText: {
+    color: "#6B7280",
+    marginTop: 6,
+    textAlign: "center",
+  },
+  bottomSpace: {
+    height: 35,
   },
 });
