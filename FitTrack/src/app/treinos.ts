@@ -1,4 +1,6 @@
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export type ExercicioTreino = {
   id: number;
   nome: string;
@@ -16,28 +18,50 @@ export type Treino = {
   criadoEm: string;
 };
 
-let treinos: Treino[] = [];
-let proximoId = 1;
+const CHAVE = "@fittrack:treinos";
 
-export function listarTreinos(): Treino[] {
-  return treinos;
+export async function listarTreinos(): Promise<Treino[]> {
+  try {
+    const dados = await AsyncStorage.getItem(CHAVE);
+
+    if (!dados) {
+      return [];
+    }
+
+    const resultado: unknown = JSON.parse(dados);
+
+    if (!Array.isArray(resultado)) {
+      return [];
+    }
+
+    return resultado as Treino[];
+  } catch (erro) {
+    console.error("Erro ao ler treinos:", erro);
+    throw erro;
+  }
 }
 
-export function salvarTreino(
-  treino: Omit<Treino, "id" | "criadoEm">
-): Treino {
+export async function salvarTreino(
+  dados: Omit<Treino, "id" | "criadoEm">
+): Promise<Treino> {
+  const treinosAtuais = await listarTreinos();
+
   const novoTreino: Treino = {
-    ...treino,
-    id: proximoId++,
+    ...dados,
+    id: Date.now(),
     criadoEm: new Date().toISOString(),
   };
 
-  treinos = [...treinos, novoTreino];
+  const atualizados = [...treinosAtuais, novoTreino];
+
+  await AsyncStorage.setItem(CHAVE, JSON.stringify(atualizados));
+
+  // Confirma que os dados podem ser lidos depois de salvar.
+  const confirmacao = await AsyncStorage.getItem(CHAVE);
+
+  if (!confirmacao) {
+    throw new Error("Não foi possível confirmar o salvamento.");
+  }
 
   return novoTreino;
-}
-
-export function limparTreinos(): void {
-  treinos = [];
-  proximoId = 1;
 }

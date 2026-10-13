@@ -21,6 +21,8 @@ type Exercicio = {
   peso: string;
 };
 
+const alunos = ["João Silva", "Maria Souza", "Carlos Santos"];
+
 export default function CriarTreino() {
   const router = useRouter();
   const params = useLocalSearchParams<{ exercicio?: string }>();
@@ -30,10 +32,11 @@ export default function CriarTreino() {
   const [descricao, setDescricao] = useState("");
   const [exercicios, setExercicios] = useState<Exercicio[]>([]);
   const [proximoId, setProximoId] = useState(1);
+  const [salvando, setSalvando] = useState(false);
 
   const adicionarExercicio = (nome: string) => {
     if (exercicios.some((e) => e.nome === nome)) {
-      Alert.alert("Aviso", "Esse exercício já foi adicionado.");
+      Alert.alert("Aviso", "Esse exercício já está no treino.");
       return;
     }
 
@@ -69,7 +72,9 @@ export default function CriarTreino() {
     );
   };
 
-  const salvar = () => {
+  const salvar = async () => {
+    if (salvando) return;
+
     if (!nomeTreino.trim()) {
       Alert.alert("Atenção", "Digite o nome do treino.");
       return;
@@ -80,23 +85,40 @@ export default function CriarTreino() {
       return;
     }
 
-    salvarTreino({
-      nome: nomeTreino.trim(),
-      aluno,
-      descricao: descricao.trim(),
-      exercicios,
-    });
+    setSalvando(true);
 
-    Alert.alert(
-      "Treino salvo!",
-      `Treino: ${nomeTreino}\nAluno: ${aluno}\nExercícios: ${exercicios.length}`,
-      [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    try {
+      const novoTreino = await salvarTreino({
+        nome: nomeTreino.trim(),
+        aluno,
+        descricao: descricao.trim(),
+        exercicios,
+      });
+
+      console.log("Treino salvo com sucesso:", novoTreino);
+
+      Alert.alert(
+        "Treino salvo!",
+        `${novoTreino.nome} foi atribuído a ${novoTreino.aluno}.`,
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (erro) {
+      console.error("Falha ao salvar treino:", erro);
+
+      Alert.alert(
+        "Erro ao salvar",
+        erro instanceof Error
+          ? erro.message
+          : "Confira o terminal do VS Code para ver o erro."
+      );
+    } finally {
+      setSalvando(false);
+    }
   };
 
   return (
@@ -116,7 +138,6 @@ export default function CriarTreino() {
       </View>
 
       <Text style={styles.label}>Nome do treino</Text>
-
       <TextInput
         style={styles.input}
         placeholder="Ex.: Treino A - Peito"
@@ -124,34 +145,30 @@ export default function CriarTreino() {
         onChangeText={setNomeTreino}
       />
 
-      <Text style={styles.label}>Selecione o aluno</Text>
-
+      <Text style={styles.label}>Aluno</Text>
       <View style={styles.studentOptions}>
-        {["João Silva", "Maria Souza", "Carlos Santos"].map(
-          (nome) => (
-            <TouchableOpacity
-              key={nome}
+        {alunos.map((nome) => (
+          <TouchableOpacity
+            key={nome}
+            style={[
+              styles.studentButton,
+              aluno === nome && styles.studentSelected,
+            ]}
+            onPress={() => setAluno(nome)}
+          >
+            <Text
               style={[
-                styles.studentButton,
-                aluno === nome && styles.studentSelected,
+                styles.studentText,
+                aluno === nome && styles.studentTextSelected,
               ]}
-              onPress={() => setAluno(nome)}
             >
-              <Text
-                style={[
-                  styles.studentText,
-                  aluno === nome && styles.studentTextSelected,
-                ]}
-              >
-                {nome}
-              </Text>
-            </TouchableOpacity>
-          )
-        )}
+              {nome}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <Text style={styles.label}>Descrição</Text>
-
       <TextInput
         style={[styles.input, styles.description]}
         placeholder="Objetivo ou observações do treino"
@@ -210,11 +227,7 @@ export default function CriarTreino() {
                 style={styles.smallInput}
                 value={exercicio.repeticoes}
                 onChangeText={(v) =>
-                  atualizarExercicio(
-                    exercicio.id,
-                    "repeticoes",
-                    v
-                  )
+                  atualizarExercicio(exercicio.id, "repeticoes", v)
                 }
                 keyboardType="numeric"
               />
@@ -244,9 +257,8 @@ export default function CriarTreino() {
         </Text>
       </TouchableOpacity>
 
-      <Text style={styles.label}>Resumo do treino</Text>
-
       <View style={styles.summary}>
+        <Text style={styles.summaryTitle}>Resumo do treino</Text>
         <Text style={styles.summaryText}>Aluno: {aluno}</Text>
         <Text style={styles.summaryText}>
           Exercícios: {exercicios.length}
@@ -257,10 +269,17 @@ export default function CriarTreino() {
       </View>
 
       <TouchableOpacity
-        style={styles.saveButton}
+        style={[
+          styles.saveButton,
+          salvando && styles.saveButtonDisabled,
+        ]}
         onPress={salvar}
+        disabled={salvando}
+        activeOpacity={0.7}
       >
-        <Text style={styles.saveButtonText}>Salvar treino</Text>
+        <Text style={styles.saveButtonText}>
+          {salvando ? "Salvando..." : "Salvar treino"}
+        </Text>
       </TouchableOpacity>
 
       <View style={{ height: 40 }} />
@@ -269,30 +288,17 @@ export default function CriarTreino() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F7F9FC",
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: "#F7F9FC" },
+  content: { paddingHorizontal: 20, paddingBottom: 20 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 60,
+    marginTop: 50,
     marginBottom: 25,
   },
-  back: {
-    fontSize: 40,
-    color: "#1683F5",
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#111827",
-  },
+  back: { fontSize: 40, color: "#1683F5" },
+  title: { fontSize: 22, fontWeight: "bold", color: "#111827" },
   label: {
     fontSize: 14,
     fontWeight: "600",
@@ -315,9 +321,7 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     textAlignVertical: "top",
   },
-  studentOptions: {
-    gap: 8,
-  },
+  studentOptions: { gap: 8 },
   studentButton: {
     padding: 13,
     backgroundColor: "#FFFFFF",
@@ -329,13 +333,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF6FF",
     borderColor: "#1683F5",
   },
-  studentText: {
-    color: "#374151",
-  },
-  studentTextSelected: {
-    color: "#1683F5",
-    fontWeight: "bold",
-  },
+  studentText: { color: "#374151" },
+  studentTextSelected: { color: "#1683F5", fontWeight: "bold" },
   sectionTitle: {
     fontSize: 19,
     fontWeight: "bold",
@@ -361,24 +360,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#111827",
   },
-  removeText: {
-    color: "#DC2626",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  fields: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 15,
-  },
-  field: {
-    flex: 1,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    color: "#6B7280",
-    marginBottom: 6,
-  },
+  removeText: { color: "#DC2626", fontSize: 12, fontWeight: "600" },
+  fields: { flexDirection: "row", gap: 10, marginTop: 15 },
+  field: { flex: 1 },
+  fieldLabel: { fontSize: 11, color: "#6B7280", marginBottom: 6 },
   smallInput: {
     height: 42,
     backgroundColor: "#F7F9FC",
@@ -408,28 +393,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 20,
   },
-  libraryButtonText: {
-    color: "#1683F5",
-    fontWeight: "bold",
-  },
+  libraryButtonText: { color: "#1683F5", fontWeight: "bold" },
   summary: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 15,
     gap: 8,
+    marginTop: 20,
   },
-  summaryText: {
-    fontSize: 13,
-    color: "#4B5563",
-  },
+  summaryTitle: { fontSize: 16, fontWeight: "bold", color: "#111827" },
+  summaryText: { fontSize: 13, color: "#4B5563" },
   saveButton: {
-    height: 54,
+    minHeight: 54,
     backgroundColor: "#1683F5",
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 25,
   },
+  saveButtonDisabled: { opacity: 0.6 },
   saveButtonText: {
     color: "#FFFFFF",
     fontSize: 16,

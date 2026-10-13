@@ -1,297 +1,147 @@
+
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 
-import { useRouter } from "expo-router";
+import { useCallback, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { listarTreinos, Treino } from "../treinos";
 
-export default function AlunoHome() {
+export default function AlunoInicio() {
   const router = useRouter();
+  const [aluno, setAluno] = useState("João Silva");
+  const [treinos, setTreinos] = useState<Treino[]>([]);
+  const [carregando, setCarregando] = useState(true);
+
+  const carregar = useCallback(async () => {
+    setCarregando(true);
+    try {
+      setTreinos(await listarTreinos());
+    } catch (erro) {
+      console.error("Erro ao carregar treinos:", erro);
+    } finally {
+      setCarregando(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregar();
+    }, [carregar])
+  );
+
+  const meusTreinos = treinos.filter(
+    (treino) => treino.aluno === aluno
+  );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.titulo}>Olá, {aluno}!</Text>
+      <Text style={styles.subtitulo}>Seus treinos no FitTrack</Text>
 
-      {/* Cabeçalho */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcome}>
-            Olá, Luiz! 👋
-          </Text>
+      <Text style={styles.label}>Selecionar aluno para teste</Text>
 
-          <Text style={styles.subtitle}>
-            Pronto para treinar hoje?
-          </Text>
-        </View>
-
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>L</Text>
-        </View>
+      <View style={styles.alunos}>
+        {["João Silva", "Maria Souza", "Carlos Santos"].map((nome) => (
+          <TouchableOpacity
+            key={nome}
+            style={[styles.aluno, aluno === nome && styles.alunoAtivo]}
+            onPress={() => setAluno(nome)}
+          >
+            <Text style={aluno === nome ? styles.textoAtivo : styles.textoAluno}>
+              {nome}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      {/* Treino de hoje */}
-      <Text style={styles.sectionTitle}>
-        Treino de hoje
-      </Text>
-
-      <View style={styles.workoutCard}>
-
-        <View style={styles.workoutHeader}>
-          <View>
-            <Text style={styles.workoutTitle}>
-              Treino A
-            </Text>
-
-            <Text style={styles.workoutSubtitle}>
-              Peito e Tríceps
-            </Text>
-          </View>
-
-          <View style={styles.status}>
-            <Text style={styles.statusText}>
-              HOJE
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.infoText}>
-            💪 5 exercícios
-          </Text>
-
-          <Text style={styles.infoText}>
-            ⏱️ 45 min
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={() => router.push("/aluno/treino")}
-        >
-          <Text style={styles.startButtonText}>
-            Começar treino
-          </Text>
+      <View style={styles.linhaTitulo}>
+        <Text style={styles.secao}>Meus treinos</Text>
+        <TouchableOpacity onPress={carregar}>
+          <Text style={styles.atualizar}>Atualizar</Text>
         </TouchableOpacity>
-
       </View>
 
-      {/* Progresso */}
-      <Text style={styles.sectionTitle}>
-        Seu progresso
-      </Text>
-
-      <View style={styles.progressContainer}>
-
-        <View style={styles.progressCard}>
-          <Text style={styles.progressNumber}>
-            12
-          </Text>
-
-          <Text style={styles.progressLabel}>
-            Treinos
+      {carregando ? (
+        <ActivityIndicator size="large" color="#1683F5" />
+      ) : meusTreinos.length === 0 ? (
+        <View style={styles.vazio}>
+          <Text style={styles.emoji}>🏋️</Text>
+          <Text style={styles.vazioTitulo}>Nenhum treino encontrado</Text>
+          <Text style={styles.vazioTexto}>
+            Crie um treino para {aluno} na área do personal.
           </Text>
         </View>
+      ) : (
+        meusTreinos.map((treino) => (
+          <View key={treino.id} style={styles.card}>
+            <Text style={styles.nomeTreino}>{treino.nome}</Text>
+            <Text style={styles.descricao}>
+              {treino.descricao || "Treino personalizado"}
+            </Text>
 
-        <View style={styles.progressCard}>
-          <Text style={styles.progressNumber}>
-            8
-          </Text>
+            <Text style={styles.info}>
+              {treino.exercicios.length} exercício(s)
+            </Text>
 
-          <Text style={styles.progressLabel}>
-            Sequência
-          </Text>
-        </View>
+            {treino.exercicios.map((exercicio) => (
+              <Text key={exercicio.id} style={styles.exercicio}>
+                • {exercicio.nome} — {exercicio.series} séries x{" "}
+                {exercicio.repeticoes} repetições
+              </Text>
+            ))}
 
-        <View style={styles.progressCard}>
-          <Text style={styles.progressNumber}>
-            42
-          </Text>
+            <TouchableOpacity
+              style={styles.botao}
+              onPress={() =>
+                router.push(`/aluno/treino?treinoId=${treino.id}` as any)
+              }
+            >
+              <Text style={styles.botaoTexto}>Começar treino →</Text>
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
 
-          <Text style={styles.progressLabel}>
-            Exercícios
-          </Text>
-        </View>
-
-      </View>
-
-      {/* Histórico */}
       <TouchableOpacity
-        style={styles.historyButton}
-        onPress={() => router.push("/aluno/historico")}
+        style={styles.historico}
+        onPress={() => router.push("/aluno/historico" as any)}
       >
-        <Text style={styles.historyText}>
-          Ver meu histórico
-        </Text>
-
-        <Text style={styles.arrow}>
-          ›
-        </Text>
+        <Text style={styles.atualizar}>Ver histórico de treinos</Text>
       </TouchableOpacity>
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F7F9FC",
-    paddingHorizontal: 20,
-  },
-
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 60,
-    marginBottom: 30,
-  },
-
-  welcome: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  subtitle: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginTop: 5,
-  },
-
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#1683F5",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111827",
-    marginBottom: 15,
-    marginTop: 10,
-  },
-
-  workoutCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 30,
-  },
-
-  workoutHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  workoutTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#111827",
-  },
-
-  workoutSubtitle: {
-    fontSize: 14,
-    color: "#6B7280",
-    marginTop: 5,
-  },
-
-  status: {
-    backgroundColor: "#E8F3FF",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-
-  statusText: {
-    color: "#1683F5",
-    fontSize: 11,
-    fontWeight: "bold",
-  },
-
-  infoRow: {
-    flexDirection: "row",
-    gap: 25,
-    marginTop: 20,
-    marginBottom: 20,
-  },
-
-  infoText: {
-    fontSize: 14,
-    color: "#6B7280",
-  },
-
-  startButton: {
-    height: 50,
-    backgroundColor: "#1683F5",
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  startButtonText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "bold",
-  },
-
-  progressContainer: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 25,
-  },
-
-  progressCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    paddingVertical: 18,
-    alignItems: "center",
-  },
-
-  progressNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1683F5",
-  },
-
-  progressLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginTop: 5,
-  },
-
-  historyButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 40,
-  },
-
-  historyText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111827",
-  },
-
-  arrow: {
-    fontSize: 28,
-    color: "#9CA3AF",
-  },
+  container: { flex: 1, backgroundColor: "#F7F9FC" },
+  content: { padding: 20, paddingTop: 55, paddingBottom: 40 },
+  titulo: { fontSize: 26, fontWeight: "bold", color: "#111827" },
+  subtitulo: { fontSize: 14, color: "#6B7280", marginTop: 5 },
+  label: { marginTop: 25, marginBottom: 10, fontWeight: "600", color: "#374151" },
+  alunos: { gap: 8 },
+  aluno: { padding: 12, borderRadius: 10, backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E5E7EB" },
+  alunoAtivo: { backgroundColor: "#E8F3FF", borderColor: "#1683F5" },
+  textoAluno: { color: "#374151" },
+  textoAtivo: { color: "#1683F5", fontWeight: "bold" },
+  linhaTitulo: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 28, marginBottom: 15 },
+  secao: { fontSize: 20, fontWeight: "bold", color: "#111827" },
+  atualizar: { color: "#1683F5", fontWeight: "bold" },
+  vazio: { backgroundColor: "#FFFFFF", padding: 25, borderRadius: 14, alignItems: "center" },
+  emoji: { fontSize: 38, marginBottom: 10 },
+  vazioTitulo: { fontSize: 17, fontWeight: "bold", color: "#111827" },
+  vazioTexto: { textAlign: "center", color: "#6B7280", marginTop: 8, lineHeight: 20 },
+  card: { backgroundColor: "#FFFFFF", borderRadius: 14, padding: 17, marginBottom: 15, borderWidth: 1, borderColor: "#E5E7EB" },
+  nomeTreino: { fontSize: 19, fontWeight: "bold", color: "#111827" },
+  descricao: { color: "#6B7280", marginTop: 5, marginBottom: 12 },
+  info: { color: "#1683F5", fontWeight: "600", marginBottom: 12 },
+  exercicio: { color: "#374151", marginBottom: 8, lineHeight: 20 },
+  botao: { backgroundColor: "#1683F5", padding: 14, borderRadius: 10, alignItems: "center", marginTop: 15 },
+  botaoTexto: { color: "#FFFFFF", fontWeight: "bold" },
+  historico: { padding: 16, alignItems: "center", marginTop: 10 },
 });
